@@ -1,0 +1,19 @@
+# 1. Aşama: Build (Derleme) Aşaması
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Proje dosyasını kopyala ve bağımlılıkları yükle
+COPY ["DocerProject.csproj", "./"]
+RUN dotnet restore "DocerProject.csproj"
+
+# Tüm kaynak kodunu kopyala ve yayınla (publish)
+COPY . .
+RUN dotnet publish "DocerProject.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+# 2. Aşama: Runtime (Çalıştırma) Aşaması
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "DocerProject.dll"]
